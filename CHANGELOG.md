@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.2.1] - 2026-10-12
+
+### Fixed
+
+- tag release job identity and notes header (#6)
+
 ## [0.2.0] - 2026-10-12
 
 ### Added
