@@ -72,3 +72,5 @@ own files.
 
 Apache License 2.0, with the upstream MIT notice retained in NOTICE. Use
 freely, share widely, attribute upstream.
+
+A stray dash -- to test the gate.
