@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.2.0] - 2026-10-12
+
+### Added
+
+- automated semantic version release pipeline (#3)
+
+### Fixed
+
+- release pipeline robustness (#4)
+
 ## 2026-10-12
 
 ### Forked
