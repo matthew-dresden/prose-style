@@ -2,15 +2,16 @@ name: CI
 
 on:
   pull_request:
-  push:
-    branches: [main]
 
 permissions:
   contents: read
 
+concurrency:
+  group: ci-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
 jobs:
-  prose:
-    name: lint, spell, and self-check
+  pr-title:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -19,10 +20,24 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install linters
+      - name: Validate PR title (conventional commits)
+        run: python3 scripts/validate_pr_title.py --title '${{ github.event.pull_request.title }}'
+
+  prose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install linters and test runner
         run: |
           python -m pip install --upgrade pip
-          pip install pymarkdownlnt codespell
+          pip install pymarkdownlnt codespell pytest
 
       - name: Markdown lint
         run: |
@@ -34,3 +49,10 @@ jobs:
 
       - name: Prose dashes and frontmatter
         run: python scripts/check_prose.py
+
+      - name: Release script unit tests
+        run: pytest tests -q
+
+      - name: Version immutability
+        if: github.event.pull_request.user.login != 'matthew-dresden-cicd[bot]'
+        run: python3 -m scripts.check_version_immutability --base-ref origin/main

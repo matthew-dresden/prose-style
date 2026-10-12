@@ -2,6 +2,7 @@
 name: prose-style
 description: Enforce a personal prose and document standard derived from pre-LLM US English. Use when drafting, editing, or reviewing prose or documentation.
 metadata:
+  version: "0.1.0"
   trigger: Writing or editing prose, documentation, comments, or reviewing text for AI patterns and punctuation violations
   author: Matthew Dresden
   derived-from: Hardik Pandya (https://hvpandya.com), stop-slop, MIT
