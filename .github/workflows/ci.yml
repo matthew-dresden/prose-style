@@ -21,7 +21,7 @@ jobs:
           python-version: "3.12"
 
       - name: Validate PR title (conventional commits)
-        run: python3 scripts/validate_pr_title.py --title '${{ github.event.pull_request.title }}'
+        run: python3 -m scripts.validate_pr_title --title '${{ github.event.pull_request.title }}'
 
   prose:
     runs-on: ubuntu-latest
