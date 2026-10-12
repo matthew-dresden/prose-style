@@ -33,6 +33,14 @@ jobs:
           COMMIT_MSG: ${{ github.event.head_commit.message }}
         run: python3 -m scripts.check_release_commit --commit-message "${COMMIT_MSG}" --output "${GITHUB_OUTPUT}"
 
+      - name: Configure git
+        env:
+          GIT_USER: "matthew-dresden-cicd[bot]"
+          GIT_USER_EMAIL: "matthew-dresden-cicd[bot]@users.noreply.github.com"
+        run: |
+          git config user.name "${GIT_USER}"
+          git config user.email "${GIT_USER_EMAIL}"
+
       - name: Create tag
         id: tag
         if: steps.check.outputs.should_skip == 'true'
@@ -56,8 +64,9 @@ jobs:
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
           FULL_TAG: ${{ steps.tag.outputs.full_tag }}
+          RELEASE_VERSION: ${{ steps.check.outputs.release_version }}
         run: |
-          awk -v header="## [${FULL_TAG}]" '
+          awk -v header="## [${RELEASE_VERSION}]" '
             index($0, header) == 1 { found = 1; next }
             found && /^## / { exit }
             found { print }
