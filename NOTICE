@@ -1,0 +1,8 @@
+prose-style
+Copyright 2026 Matthew Dresden
+
+This product includes prose rules derived from stop-slop
+(https://github.com/hardikpandya/stop-slop) by Hardik Pandya, originally
+licensed under the MIT License. The upstream copyright notice is retained
+here: Copyright (c) Hardik Pandya. The derivative and this repository are
+licensed under the Apache License 2.0, which LICENSE carries in full.
