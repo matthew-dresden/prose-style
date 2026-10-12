@@ -2,7 +2,7 @@ name: Automerge
 
 on:
   pull_request:
-    types: [opened, reopened, ready_for_review]
+    types: [opened, reopened, ready_for_review, synchronize]
 
 permissions:
   contents: read
@@ -18,7 +18,18 @@ jobs:
           app-id: ${{ secrets.GH_APP_ID }}
           private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
 
+      - name: Check auto-merge state
+        id: state
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: >-
+          enabled="$(gh pr view '${{ github.event.pull_request.number }}'
+          --repo '${{ github.repository }}' --json autoMergeRequest
+          --jq '.autoMergeRequest != null')";
+          echo "already_enabled=${enabled}" >> "${GITHUB_OUTPUT}"
+
       - name: Enable auto-merge (squash)
+        if: steps.state.outputs.already_enabled == 'false'
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: >-

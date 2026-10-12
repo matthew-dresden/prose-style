@@ -5,6 +5,7 @@ import pytest
 from scripts.calculate_version import (
     _apply_bump,
     _find_latest_version,
+    _max_bump_since_last_tag,
     _parse_semver,
     calculate_version,
 )
@@ -82,3 +83,46 @@ def test_calculate_version_rejects_existing_tag(monkeypatch):
 def test_calculate_version_rejects_invalid_bump_type():
     with pytest.raises(SystemExit):
         calculate_version("v", "mega")
+
+
+def test_max_bump_takes_highest_across_commits(monkeypatch):
+    monkeypatch.setattr(
+        "scripts.calculate_version._find_last_tag", lambda prefix: "v0.1.0"
+    )
+    monkeypatch.setattr(
+        "scripts.calculate_version._get_commits",
+        lambda last_tag: ["feat: big thing (#3)", "fix: small thing (#4)"],
+    )
+    assert _max_bump_since_last_tag("v") == "minor"
+
+
+def test_max_bump_escalates_to_major(monkeypatch):
+    monkeypatch.setattr("scripts.calculate_version._find_last_tag", lambda prefix: None)
+    monkeypatch.setattr(
+        "scripts.calculate_version._get_commits",
+        lambda last_tag: ["fix: a (#1)", "feat!: breaking (#2)"],
+    )
+    assert _max_bump_since_last_tag("v") == "major"
+
+
+def test_max_bump_defaults_to_patch(monkeypatch):
+    monkeypatch.setattr(
+        "scripts.calculate_version._find_last_tag", lambda prefix: "v0.1.0"
+    )
+    monkeypatch.setattr(
+        "scripts.calculate_version._get_commits",
+        lambda last_tag: ["docs: notes (#5)"],
+    )
+    assert _max_bump_since_last_tag("v") == "patch"
+
+
+def test_max_bump_rejects_non_conventional_commit(monkeypatch):
+    monkeypatch.setattr(
+        "scripts.calculate_version._find_last_tag", lambda prefix: "v0.1.0"
+    )
+    monkeypatch.setattr(
+        "scripts.calculate_version._get_commits",
+        lambda last_tag: ["random merge message"],
+    )
+    with pytest.raises(SystemExit):
+        _max_bump_since_last_tag("v")
