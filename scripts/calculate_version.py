@@ -21,7 +21,40 @@ import subprocess
 import sys
 
 from scripts.constants import INITIAL_VERSION, TAG_PREFIX, VALID_BUMP_TYPES
+from scripts.generate_changelog import _find_last_tag, _get_commits
 from scripts.validate_pr_title import parse_commit_message
+
+BUMP_RANK = {"patch": 1, "minor": 2, "major": 3}
+
+
+def _max_bump_since_last_tag(tag_prefix: str) -> str:
+    """Determine the highest bump level across commits since the last tag.
+
+    Squash merges deliver one conventional commit per PR, so scanning the
+    full range releases every pending change at its correct level.
+
+    Args:
+        tag_prefix: The tag prefix to search (e.g. "v").
+
+    Returns:
+        One of "major", "minor", "patch".
+
+    Raises:
+        SystemExit: If a commit message is not a valid conventional commit.
+    """
+    last_tag = _find_last_tag(tag_prefix)
+    commits = _get_commits(last_tag)
+    highest = "patch"
+    for subject in commits:
+        parsed = parse_commit_message(subject)
+        if not parsed["valid"]:
+            print(f"Error: invalid commit message: {parsed['error']}", file=sys.stderr)
+            sys.exit(1)
+        if not parsed["bump"]:
+            continue
+        if BUMP_RANK[parsed["bump"]] > BUMP_RANK[highest]:
+            highest = parsed["bump"]
+    return highest
 
 
 def _parse_semver(version_string: str) -> tuple[int, int, int] | None:
@@ -199,7 +232,13 @@ def main() -> None:
     parser.add_argument(
         "--commit-message",
         default=None,
-        help="The squash commit message (required unless --bump-type is provided).",
+        help="A commit message to parse directly (overrides scanning since the last tag).",
+    )
+    parser.add_argument(
+        "--scan-since-tag",
+        action="store_true",
+        default=True,
+        help="Scan all commits since the last tag and take the highest bump (default).",
     )
     parser.add_argument(
         "--tag-prefix",
@@ -229,11 +268,7 @@ def main() -> None:
             sys.exit(1)
         bump_type = parsed["bump"]
     else:
-        print(
-            "Error: either --commit-message or --bump-type must be provided",
-            file=sys.stderr,
-        )
-        sys.exit(1)
+        bump_type = _max_bump_since_last_tag(args.tag_prefix)
 
     result = calculate_version(args.tag_prefix, bump_type)
 
